@@ -3,7 +3,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.IO;
 using osu.Framework.Allocation;
 using osu.Framework.Audio;
 using osu.Framework.Audio.Sample;
@@ -12,7 +11,6 @@ using osu.Framework.Graphics;
 using osu.Framework.Graphics.Containers;
 using osu.Framework.Graphics.Shapes;
 using osu.Framework.Graphics.Textures;
-using osu.Framework.Graphics.Video;
 using osu.Framework.MathUtils;
 using osu.Framework.Timing;
 using osu.Game.Graphics;
@@ -90,7 +88,7 @@ namespace osu.Game.Screens.Menu
             private RulesetFlow rulesets;
             private Container rulesetsScale;
             private Container logoContainerSecondary;
-            private Drawable lazerLogo;
+            private LazerLogo lazerLogo;
 
             private GlitchingTriangles triangles;
 
@@ -142,10 +140,10 @@ namespace osu.Game.Screens.Menu
                         RelativeSizeAxes = Axes.Both,
                         Anchor = Anchor.Centre,
                         Origin = Anchor.Centre,
-                        Child = lazerLogo = new LazerLogo(textures.GetStream("Menu/logo-triangles.mp4"))
+                        Child = lazerLogo = new LazerLogo()
                         {
                             Anchor = Anchor.Centre,
-                            Origin = Anchor.Centre,
+                            Origin = Anchor.Centre
                         }
                     },
                 };
@@ -221,6 +219,7 @@ namespace osu.Game.Screens.Menu
 
                         // matching flyte curve y = 0.25x^2 + (max(0, x - 0.7) / 0.3) ^ 5
                         lazerLogo.FadeIn().ScaleTo(scale_start).Then().Delay(logo_scale_duration * 0.7f).ScaleTo(scale_start - scale_adjust, logo_scale_duration * 0.3f, Easing.InQuint);
+                        lazerLogo.Start(logo_1, logo_scale_duration);
                         logoContainerSecondary.ScaleTo(scale_start).Then().ScaleTo(scale_start - scale_adjust * 0.25f, logo_scale_duration, Easing.InQuad);
                     }
 
@@ -257,20 +256,6 @@ namespace osu.Game.Screens.Menu
                 {
                     base.LoadComplete();
                     this.FadeOutFromOne(flash_length, Easing.Out);
-                }
-            }
-
-            private class LazerLogo : CompositeDrawable
-            {
-                public LazerLogo(Stream videoStream)
-                {
-                    Size = new Vector2(960);
-
-                    InternalChild = new VideoSprite(videoStream)
-                    {
-                        RelativeSizeAxes = Axes.Both,
-                        Clock = new FramedOffsetClock(Clock) { Offset = -logo_1 }
-                    };
                 }
             }
 
