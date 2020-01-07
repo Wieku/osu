@@ -17,6 +17,8 @@ using osu.Framework.Graphics.UserInterface;
 using osu.Framework.Input.Events;
 using osu.Game.Graphics;
 using osu.Game.Graphics.Sprites;
+using osu.Game.Online.API;
+using osu.Game.Users;
 using osuTK;
 
 namespace osu.Game.Overlays.Settings
@@ -36,6 +38,14 @@ namespace osu.Game.Overlays.Settings
         private SpriteText text;
 
         public bool ShowsDefaultIndicator = true;
+
+        public bool SupporterOnly = false;
+
+        private SpriteText supporterOnlySprite;
+
+        private Bindable<User> user;
+
+        private bool enabled = true;
 
         public virtual string LabelText
         {
@@ -87,7 +97,10 @@ namespace osu.Game.Overlays.Settings
                     RelativeSizeAxes = Axes.X,
                     AutoSizeAxes = Axes.Y,
                     Padding = new MarginPadding { Left = SettingsPanel.CONTENT_MARGINS },
-                    Child = Control = CreateControl()
+                    Children = new[]
+                    {
+                        Control = CreateControl(),
+                    }
                 },
             };
 
@@ -102,6 +115,49 @@ namespace osu.Game.Overlays.Settings
                     restoreDefaultButton.Bindable = controlWithCurrent.Current;
             }
         }
+
+        [BackgroundDependencyLoader]
+        private void load(IAPIProvider api, OsuColour colour)
+        {
+            if (!SupporterOnly) return;
+
+            user = api.LocalUser.GetBoundCopy();
+            user.BindValueChanged(_ => updateSupporterStatus(), true);
+
+            FlowContent.Add(
+                supporterOnlySprite = new OsuSpriteText
+                {
+                    Text = "This option is for supporters only",
+                    Margin = new MarginPadding { Top = 2.5f, Bottom = 5 },
+                    Colour = colour.YellowDark,
+                    Font = OsuFont.GetFont(weight: FontWeight.Regular),
+                }
+            );
+
+            supporterOnlySprite.Hide();
+        }
+
+        private void updateSupporterStatus()
+        {
+            if (!SupporterOnly) return;
+
+            if (user.Value?.IsSupporter ?? false)
+            {
+                supporterOnlySprite.Hide();
+                enabled = true;
+                text.FadeTo(1f, 500f);
+                Control.FadeTo(1f, 500f);
+            }
+            else
+            {
+                supporterOnlySprite.Show();
+                text.FadeTo(0.7f, 500f);
+                Control.FadeTo(0.7f, 500f);
+                enabled = false;
+            }
+        }
+
+        protected override bool ShouldBeConsideredForInput(Drawable child) => enabled && base.ShouldBeConsideredForInput(child);
 
         private class RestoreDefaultValueButton : Container, IHasTooltip
         {

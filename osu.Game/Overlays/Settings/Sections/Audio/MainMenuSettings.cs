@@ -37,6 +37,7 @@ namespace osu.Game.Overlays.Settings.Sections.Audio
                 new SettingsDropdown<BackgroundSource>
                 {
                     LabelText = "Background source",
+                    SupporterOnly = true,
                     Bindable = config.GetBindable<BackgroundSource>(OsuSetting.MenuBackgroundSource),
                     Items = Enum.GetValues(typeof(BackgroundSource)).Cast<BackgroundSource>()
                 }
