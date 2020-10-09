@@ -37,6 +37,8 @@ namespace osu.Game.Rulesets.Osu.UI.Cursor
         private Bindable<float> userCursorScale;
         private Bindable<bool> autoCursorScale;
 
+        private Drawable stack;
+
         public OsuCursorContainer()
         {
             InternalChild = fadeContainer = new Container
@@ -61,6 +63,16 @@ namespace osu.Game.Rulesets.Osu.UI.Cursor
         protected override void LoadComplete()
         {
             base.LoadComplete();
+
+            Drawable cursor = this;
+
+            while ((cursor = cursor.Parent) != null)
+            {
+                stack = cursor;
+                if (!(stack is OsuPlayfieldAdjustmentContainer)) continue;
+
+                break;
+            }
 
             showTrail.BindValueChanged(v => cursorTrail.FadeTo(v.NewValue ? 1 : 0, 200), true);
 
@@ -145,6 +157,52 @@ namespace osu.Game.Rulesets.Osu.UI.Cursor
         }
 
         public override bool HandlePositionalInput => true; // OverlayContainer will set this false when we go hidden, but we always want to receive input.
+
+        // protected override bool OnMouseMove(MouseMoveEvent e)
+        // {
+        //     if (stack == null) return base.OnMouseMove(e);
+        //
+        //     float right = stack.DrawWidth;
+        //     float bottom = stack.DrawHeight;
+        //
+        //     while (true)
+        //     {
+        //         bool ok1 = false;
+        //         bool ok2 = false;
+        //
+        //         if (e.CurrentState.Mouse.Position.X < 0)
+        //         {
+        //             e.CurrentState.Mouse.Position = new Vector2(-e.CurrentState.Mouse.Position.X, e.CurrentState.Mouse.Position.Y);
+        //         }
+        //         else if (e.CurrentState.Mouse.Position.X > right)
+        //         {
+        //             e.CurrentState.Mouse.Position = new Vector2(2 * right - e.CurrentState.Mouse.Position.X, e.CurrentState.Mouse.Position.Y);
+        //         }
+        //         else
+        //         {
+        //             ok1 = true;
+        //         }
+        //
+        //         if (e.CurrentState.Mouse.Position.Y < 0)
+        //         {
+        //             e.CurrentState.Mouse.Position = new Vector2(e.CurrentState.Mouse.Position.X, -e.CurrentState.Mouse.Position.Y);
+        //         }
+        //         else if (e.CurrentState.Mouse.Position.Y > bottom) {
+        //             e.CurrentState.Mouse.Position = new Vector2(e.CurrentState.Mouse.Position.X, 2 * bottom - e.CurrentState.Mouse.Position.Y);
+        //         }
+        //         else
+        //         {
+        //             ok2 = true;
+        //         }
+        //
+        //         if (ok1 && ok2)
+        //         {
+        //             break;
+        //         }
+        //     }
+        //
+        //     return base.OnMouseMove(e);
+        // }
 
         protected override void PopIn()
         {

@@ -31,6 +31,8 @@ namespace osu.Game.Rulesets.Osu.UI.Cursor
         private double timeOffset;
         private float time;
 
+        private Drawable stack;
+
         public CursorTrail()
         {
             // as we are currently very dependent on having a running clock, let's make our own clock for the time being.
@@ -56,6 +58,19 @@ namespace osu.Game.Rulesets.Osu.UI.Cursor
         protected override void LoadComplete()
         {
             base.LoadComplete();
+
+            Drawable cursor = this;
+
+            while ((cursor = cursor.Parent) != null)
+            {
+                stack = cursor;
+                if (!(stack is OsuPlayfieldAdjustmentContainer)) continue;
+
+                stack = cursor.Parent;
+
+                break;
+            }
+
             resetTime();
         }
 
@@ -126,6 +141,37 @@ namespace osu.Game.Rulesets.Osu.UI.Cursor
 
         protected override bool OnMouseMove(MouseMoveEvent e)
         {
+            var screenQuad = stack.ScreenSpaceDrawQuad;
+            float left = screenQuad.TopLeft.X;
+            float top = screenQuad.TopLeft.Y;
+            float right = screenQuad.BottomRight.X;
+            float bottom = screenQuad.BottomRight.Y;
+
+            while (true)
+            {
+                bool ok1 = false;
+                bool ok2 = false;
+
+                if (e.CurrentState.Mouse.Position.X < left)
+                    e.CurrentState.Mouse.Position = new Vector2(2 * left - e.CurrentState.Mouse.Position.X, e.CurrentState.Mouse.Position.Y);
+                else if (e.CurrentState.Mouse.Position.X > right)
+                    e.CurrentState.Mouse.Position = new Vector2(2 * right - e.CurrentState.Mouse.Position.X, e.CurrentState.Mouse.Position.Y);
+                else
+                    ok1 = true;
+
+                if (e.CurrentState.Mouse.Position.Y < top)
+                    e.CurrentState.Mouse.Position = new Vector2(e.CurrentState.Mouse.Position.X, 2 * top - e.CurrentState.Mouse.Position.Y);
+                else if (e.CurrentState.Mouse.Position.Y > bottom)
+                    e.CurrentState.Mouse.Position = new Vector2(e.CurrentState.Mouse.Position.X, 2 * bottom - e.CurrentState.Mouse.Position.Y);
+                else
+                    ok2 = true;
+
+                if (ok1 && ok2)
+                {
+                    break;
+                }
+            }
+
             Vector2 pos = e.ScreenSpaceMousePosition;
 
             if (lastPosition == null)
@@ -208,7 +254,7 @@ namespace osu.Game.Rulesets.Osu.UI.Cursor
 
                 shader = Source.shader;
                 texture = Source.texture;
-                size = Source.partSize;
+                size = Source.partSize * 5.0f;
                 time = Source.time;
 
                 Source.parts.CopyTo(parts, 0);
